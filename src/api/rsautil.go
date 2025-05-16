@@ -31,7 +31,7 @@ func SignByPss(content, privateKey []byte) string {
 
 	// content - Signature
 	var opts rsa.PSSOptions
-	opts.SaltLength = rsa.PSSSaltLengthAuto // for simple example
+	opts.SaltLength = rsa.PSSSaltLengthEqualsHash // for simple example
 	newhash := crypto.SHA256
 	pssh := newhash.New()
 	pssh.Write(content)
@@ -61,7 +61,7 @@ func VerifySignPss(content, signature, publicKey []byte) bool {
 
 	// Verify Signature
 	var opts rsa.PSSOptions
-	opts.SaltLength = rsa.PSSSaltLengthAuto // for simple example
+	opts.SaltLength = rsa.PSSSaltLengthEqualsHash // for simple example
 	newhash := crypto.SHA256
 	pssh := newhash.New()
 	pssh.Write(content)
@@ -90,7 +90,6 @@ func Encrypt(content, publicKey []byte) []byte {
 		log.Printf("Error converting to Public Key: %v", err)
 		return nil
 	}
-
 	hash := sha256.New()
 	res, err := rsa.EncryptOAEP(hash, rand.Reader, pubKey, content, nil)
 	if err != nil {

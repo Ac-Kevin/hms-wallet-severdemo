@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"io"
 	"log"
+	"strings"
 )
 
 // GenerateJwe generate jwe
@@ -31,19 +32,19 @@ MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAgBJB4usbO33Xg5vhJqfHJsMZj44f7rxpjRuP
 -----END PUBLIC KEY-----
 `
 	encryptedKey := getEncryptedKey(sessionKey, sessionKeyPublicKey)
-	encryptedKeyEncode := base64.URLEncoding.EncodeToString([]byte(encryptedKey))
+	encryptedKeyEncode := base64.RawURLEncoding.EncodeToString([]byte(encryptedKey))
 
 	// Part 3: JWE IV
 	// Generate a 12-byte iv. Then convert it to a Hex String, and then do base64 encoding to the Hex String.
 	iv := generateSecureRandomFactor(12)
 	ivHexStr := hex.EncodeToString(iv)
-	ivEncode := base64.URLEncoding.EncodeToString([]byte(ivHexStr))
+	ivEncode := base64.RawURLEncoding.EncodeToString([]byte(ivHexStr))
 
 	// Part 4: JWE Cipher Text
 	// Encrypt the payload with sessionKey and iv using AES/GCM/NoPadding algorithm. Encode the cipher text into a
 	// Hex String. Then do gzip compression and base64 encoding to the Hex String.
 	cipherText := getCipherText(payload, sessionKey, iv)
-	cipherTextEncode := base64.URLEncoding.EncodeToString(cipherText)
+	cipherTextEncode := base64.RawURLEncoding.EncodeToString(cipherText)
 
 	// Part 5: JWE Signature
 	// Use your own private key to sign the content with SHA256withRSA, then do base64 encoding to it.
@@ -78,6 +79,7 @@ func getSignature(jweSignPrivateKey string, sessionKey string, payLoadJson strin
 }
 
 func getCipherText(payload string, sessionKey string, iv []byte) []byte {
+
 	block, err := aes.NewCipher([]byte(sessionKey))
 	if err != nil {
 		panic(err.Error())
@@ -92,9 +94,9 @@ func getCipherText(payload string, sessionKey string, iv []byte) []byte {
 
 	var b bytes.Buffer
 	w := gzip.NewWriter(&b)
-	defer w.Close()
-	w.Write([]byte(hex.EncodeToString(ciphertext)))
+	w.Write([]byte(strings.ToUpper(hex.EncodeToString(ciphertext))))
 	w.Flush()
+	w.Close()
 
 	return b.Bytes()
 }
@@ -135,5 +137,5 @@ func getEncodeHeader() string {
 	buffer.WriteString(", zip=")
 	buffer.WriteString(jweHeader["zip"])
 
-	return base64.URLEncoding.EncodeToString(buffer.Bytes())
+	return base64.RawURLEncoding.EncodeToString(buffer.Bytes())
 }
